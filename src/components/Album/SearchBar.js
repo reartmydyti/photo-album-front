@@ -9,20 +9,28 @@ const SearchBar = ({ onSearch }) => {
   };
 
   return (
-    <div>
+    <div className="input-group mb-3">
       <input
         type="text"
+        className="form-control"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         placeholder="Search by name"
+        aria-label="Search by name"
       />
       <input
         type="text"
+        className="form-control"
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
         placeholder="Search by category"
+        aria-label="Search by category"
       />
-      <button onClick={handleSearch}>Search</button>
+      <div className="input-group-append">
+        <button className="btn btn-outline-primary" onClick={handleSearch}>
+          Search
+        </button>
+      </div>
     </div>
   );
 };

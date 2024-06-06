@@ -1,37 +1,33 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { login } from '../api/api';
+import { useNavigate, Link } from 'react-router-dom';
+import { register } from '../api/api';
 import Layout from '../components/Layout';
 
-const LoginPage = () => {
+const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await login({ email, password });
-      if (response && response.status === 200 && response.message) {
-        localStorage.setItem('token', response.message);
-
-
-
-        navigate('/');
+      const response = await register({ email, password });
+      if (response && response.success) {
+        navigate('/login');
       } else {
-        alert('Login failed');
+        alert('Registration failed');
       }
     } catch (error) {
-      console.error('Error logging in:', error);
-      alert('An error occurred during login');
+      console.error('Error registering:', error);
+      alert('An error occurred during registration');
     }
   };
 
   return (
-    <Layout>
+    <Layout> 
       <div className="container">
-        <h2>Login</h2>
-        <form onSubmit={handleLogin}>
+        <h2>Register</h2>
+        <form onSubmit={handleRegister}>
           <div className="form-group">
             <label htmlFor="email">Email address</label>
             <input
@@ -56,14 +52,14 @@ const LoginPage = () => {
               required
             />
           </div>
-          <button type="submit" className="btn btn-primary">Login</button>
+          <button type="submit" className="btn btn-primary">Register</button>
         </form>
-        <p className="mt-3">
-          Don't have an account? <Link to="/register">Register Here!</Link>
-        </p>
+        <div>
+          <p>Have an Account? <Link to="/login">Login Now!</Link></p>
+        </div>
       </div>
     </Layout>
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

@@ -1,13 +1,13 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import PhotoDetail from '../components/Photo/PhotoDetail.js'; 
 
 const PhotoPage = () => {
   const { id } = useParams();
+  
   return (
     <div>
-      <h1>Photo Page</h1>
-      <p>Photo ID: {id}</p>
-      {/* Add components or content for the photo page here */}
+      <PhotoDetail id={id} />
     </div>
   );
 };
