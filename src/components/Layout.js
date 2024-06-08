@@ -1,12 +1,33 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { fetchLoggedInUser } from '../api/api';
 
 const Layout = ({ children }) => {
   const isLoggedIn = !!localStorage.getItem('token');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const user = await fetchLoggedInUser();
+        if (user && user.userId) {
+          localStorage.setItem('userId', user.userId);
+        } else {
+          console.log('fetchLoggedInUser did not return userId');
+        }
+      } catch (error) {
+        console.error('Error fetching logged in user:', error);
+      }
+    };
+
+    if (isLoggedIn) {
+      getUser();
+    }
+  }, [isLoggedIn]);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     navigate('/');
   };
 

@@ -5,12 +5,14 @@ import { register } from '../../api/api';
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const history = useHistory();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await register({ email, password });
+      const response = await register({ email, password, firstName, lastName });
       if (response && response.success) {
         history.push('/login');
       } else {
@@ -50,7 +52,29 @@ const Register = () => {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary">Register</button>
+        <div className="form-group">
+          <label htmlFor="firstName">First Name</label>
+          <input
+            type="text"
+            className="form-control"
+            id="firstName"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Enter first name"
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="lastName">Last Name</label>
+          <input
+            type="text"
+            className="form-control"
+            id="lastName"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Enter last name"
+          />
+        </div>
+        <button type="submit" className="btn btn-primary mr-2">Register</button>
       </form>
     </div>
   );

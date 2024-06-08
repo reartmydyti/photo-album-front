@@ -1,61 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import { fetchAlbums, fetchAlbumsByCategory, fetchCategories } from '../../api/api'; 
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { fetchAlbums, fetchAlbumsByCategory, fetchCategories } from '../../api/api';
 import { Link } from 'react-router-dom';
+import SearchBar from './SearchBar';
+import debounce from 'lodash.debounce';
 
 const AlbumList = () => {
   const [albums, setAlbums] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [sortOrder, setSortOrder] = useState('none'); 
+  const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [filteredAlbums, setFilteredAlbums] = useState([]);
+  const [sortOrder, setSortOrder] = useState('none');
 
   useEffect(() => {
-    const fetchAlbumData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetchAlbums();
-        console.log('Albums fetched:', response);
-        
-        if (response && response.success) {
-          setAlbums(Array.isArray(response.data) ? response.data : []);
-        } else {
-          console.error('Unexpected response format:', response);
-          setAlbums([]);
-        }
-      } catch (error) {
-        console.error('Error fetching albums:', error);
-      }
-    };
+        const [albumsResponse, categoriesResponse] = await Promise.all([
+          fetchAlbums(),
+          fetchCategories()
+        ]);
 
-    const fetchCategoryData = async () => {
-      try {
-        const categoriesResponse = await fetchCategories();
-        console.log('Categories fetched:', categoriesResponse);
+        if (albumsResponse && albumsResponse.success) {
+          setAlbums(Array.isArray(albumsResponse.data) ? albumsResponse.data : []);
+        }
 
         if (categoriesResponse && categoriesResponse.success) {
           setCategories(Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []);
-        } else {
-          console.error('Unexpected response format for categories:', categoriesResponse);
-          setCategories([]);
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+        setCategoriesLoading(false);
       }
     };
-
-    fetchAlbumData();
-    fetchCategoryData();
+    fetchData();
   }, []);
 
-  const handleCategoryClick = async (categoryId) => {
+  const handleCategoryClick = useCallback(async (categoryId) => {
     setSelectedCategory(categoryId);
+    setLoading(true);
     try {
       const response = categoryId === null ? await fetchAlbums() : await fetchAlbumsByCategory(categoryId);
-      setAlbums(response && response.success ? response.data : []);
+      setAlbums(response && response.success ? response.data || [] : []);
     } catch (error) {
       console.error('Error fetching albums:', error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const handleSortClick = (order) => {
+  const handleSortClick = useCallback((order) => {
     setSortOrder(order);
     const sortedAlbums = [...albums].sort((a, b) => {
       if (order === 'lowToHigh') {
@@ -67,33 +63,58 @@ const AlbumList = () => {
       }
     });
     setAlbums(sortedAlbums);
-  };
+  }, [albums]);
+
+  const handleSearch = useMemo(() => debounce(({ searchTerm, categoryId }) => {
+    setSelectedCategory(categoryId);
+    let filtered = albums;
+
+    if (searchTerm) {
+      filtered = filtered.filter(album =>
+        album.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        album.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (categoryId) {
+      filtered = filtered.filter(album => album.categoryId === parseInt(categoryId));
+    }
+
+    setFilteredAlbums(filtered);
+  }, 300), [albums]);
+
+  useEffect(() => {
+    setFilteredAlbums(albums);
+  }, [albums]);
 
   return (
     <div className="container px-0">
+      <SearchBar onSearch={handleSearch} />
       <div className="pp-category-filter">
-      <div className="row">
-  <div className="col-sm-12">
-    <button 
-      className="btn btn-outline-primary pp-filter-button mr-2" 
-      onClick={() => handleCategoryClick(null)}
-    >
-      All Albums
-    </button>
-    {categories.map(category => (
-      <button
-        key={category.id} 
-        className="btn btn-outline-primary pp-filter-button mr-2" 
-        onClick={() => handleCategoryClick(category.id)}
-      >
-        {category.name}
-      </button>
-    ))}
-  </div>
-</div>
-
-
-        <div className="col-sm-12">
+        <div className="row">
+          <div className="col-sm-12">
+            <button 
+              className="btn btn-outline-primary pp-filter-button mr-2" 
+              onClick={() => handleCategoryClick(null)}
+            >
+              All Albums
+            </button>
+            {categoriesLoading ? (
+              <p>Loading categories...</p>
+            ) : (
+              categories.map(category => (
+                <button
+                  key={category.id} 
+                  className="btn btn-outline-primary pp-filter-button mr-2" 
+                  onClick={() => handleCategoryClick(category.id)}
+                >
+                  {category.name}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="col-sm-12 mt-3">
           <button 
               className="btn btn-outline-secondary pp-sort-button"
               onClick={() => handleSortClick('lowToHigh')}
@@ -101,30 +122,36 @@ const AlbumList = () => {
               Sort by Rating: Low to High
             </button>
             <button 
-              className="btn btn-outline-secondary pp-sort-button"
+              className="btn btn-outline-secondary pp-sort-button ml-2"
               onClick={() => handleSortClick('highToLow')}
             >
               Sort by Rating: High to Low
             </button>
-          </div>
+        </div>
       </div>
-      <div className="pp-gallery">
-        <div className="card-columns">
-          {albums.length > 0 ? (
-            albums.map(album => (
-              <div key={album.id} className="card" data-groups={`["${album.category.name.toLowerCase()}"]`}>
-                <Link to={`/album/${album.id}`}>
-                  <figure className="pp-effect">
-                    {album.photos.length > 0 && (
-                      <img className="img-fluid" src={album.photos[0].url} alt={album.name} />
-                    )}
-                    <figcaption>
-                      <div className="h4">{album.name}</div>
-                      <p>{album.description}</p>
-                      <p>Album Rating: {album.averageRating}</p>
-                    </figcaption>
-                  </figure>
-                </Link>
+      <div className="pp-gallery mt-4">
+        <div className="row">
+          {loading ? (
+            <p>Loading albums...</p>
+          ) : filteredAlbums.length > 0 ? (
+            filteredAlbums.map(album => (
+              <div key={album.id} className="col-md-4 mb-4">
+                <div className="card h-100">
+                  <div className="card-img-container">
+                    <Link to={`/album/${album.id}`}>
+                      {album.photos.length > 0 && (
+                        <img className="card-img-top" src={`${album.photos[0].url}?quality=low`} alt={album.name} />
+                      )}
+                    </Link>
+                  </div>
+                  <div className="card-body">
+                    <h5 className="card-title">{album.name}</h5>
+                    <p className="card-text">{album.description}</p>
+                    <p className="card-text">
+                      <span className="badge badge-primary">Rating: {album.averageRating}</span>
+                    </p>
+                  </div>
+                </div>
               </div>
             ))
           ) : (
@@ -136,4 +163,4 @@ const AlbumList = () => {
   );
 };
 
-export default AlbumList;
+export default memo(AlbumList);

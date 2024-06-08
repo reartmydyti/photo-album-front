@@ -117,8 +117,21 @@ export const deleteCategory = async (id) => {
   }
 };
 
+
+export const fetchLoggedInUser = async () => {
+  try {
+    const response = await api.get('/User/GetLoggedInUser', { headers: getAuthHeader() });
+    console.log('fetchLoggedInUser response:', response);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching logged in user:', error);
+    throw error;
+  }
+};
+
+
 export const login = async (credentials) => {
-  const response = await authApi.post('/User/Login', credentials);
+  const response = await api.post('/User/Login', credentials);
   return response.data;
 };
 
@@ -209,4 +222,14 @@ export const updateRating = async (id, ratingDto) => {
 export const deleteRating = async (id) => {
   const response = await api.delete(`/Rating/DeleteRating/${id}`, { headers: getAuthHeader() });
   return response.data;
+};
+
+
+export const loginOrSignupWithGoogle = async (credential) => {
+  try {
+    const response = await authApi.post('/login-or-signup-google', credential);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response.data);
+  }
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchPhotoById, fetchCommentsByPhotoId, createComment } from '../../api/api';
+import { fetchPhotoById, fetchCommentsByPhotoId, createComment, deleteComment } from '../../api/api';
 import Layout from '../../components/Layout.js';
 
 const PhotoDetail = () => {
@@ -9,7 +9,6 @@ const PhotoDetail = () => {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
-
 
   useEffect(() => {
     const fetchPhotoData = async () => {
@@ -24,19 +23,19 @@ const PhotoDetail = () => {
       }
     };
 
-    const fetchComments = async () => {
-      try {
-        const response = await fetchCommentsByPhotoId(id);
-        console.log('Comments response:', response);
-        setComments(response.data);
-      } catch (error) {
-        console.error('Error fetching comments:', error);
-      }
-    };
-
     fetchPhotoData();
     fetchComments();
   }, [id]);
+
+  const fetchComments = async () => {
+    try {
+      const response = await fetchCommentsByPhotoId(id);
+      console.log('Comments response:', response);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -51,10 +50,19 @@ const PhotoDetail = () => {
     try {
       const response = await createComment(commentData);
       console.log('Comment created:', response);
-      setComments([...comments, response.data]);
+      fetchComments();
       setNewComment('');
     } catch (error) {
       console.error('Error posting comment:', error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await deleteComment(commentId);
+      setComments(comments.filter(comment => comment.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
     }
   };
 
@@ -79,11 +87,26 @@ const PhotoDetail = () => {
           <div className="row justify-content-center">
             <div className="col-md-8">
               <h4>Comments</h4>
-              <ul>
+              <div className="comments-container"> 
                 {comments.map(comment => (
-                  <li key={comment.id}>{comment.content}</li>
+                  <div key={comment.id} className="comment-box">
+                    <div className="comment-header">
+                      {comment.user ? (
+                        <strong className="comment-user-name">
+                          {comment.user.firstName} {comment.user.lastName}
+                        </strong>
+                      ) : (
+                        <strong className="comment-user-name">Unknown User</strong>
+                      )}
+                      <span className="comment-date">{formatDate(comment.datePosted)}</span>
+                      <button onClick={() => handleDeleteComment(comment.id)} className="btn btn-danger ml-2">
+                        Delete
+                      </button>
+                    </div>
+                    <div className="comment-content">{comment.content}</div>
+                  </div>
                 ))}
-              </ul>
+              </div>
               <form onSubmit={handleSubmitComment}>
                 <div className="form-group">
                   <label htmlFor="newComment">New Comment</label>
@@ -103,6 +126,17 @@ const PhotoDetail = () => {
       </div>
     </Layout>
   );
+};
+
+const formatDate = (dateString) => {
+  const options = {
+    hour: 'numeric',
+    minute: 'numeric',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  };
+  return new Date(dateString).toLocaleDateString('en-US', options);
 };
 
 export default PhotoDetail;

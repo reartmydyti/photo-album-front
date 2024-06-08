@@ -18,14 +18,14 @@ const SearchBar = ({ onSearch }) => {
         placeholder="Search by name"
         aria-label="Search by name"
       />
-      <input
+      {/* <input
         type="text"
         className="form-control"
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
         placeholder="Search by category"
         aria-label="Search by category"
-      />
+      /> */}
       <div className="input-group-append">
         <button className="btn btn-outline-primary" onClick={handleSearch}>
           Search

@@ -12,7 +12,7 @@ const DashboardPage = () => {
     const token = localStorage.getItem('token');
     if (token) {
       const decodedToken = jwtDecode(token);
-      const userIdFromToken = decodedToken.userId || decodedToken.id; // Adjust this line based on your token's structure
+      const userIdFromToken = decodedToken.userId || decodedToken.id;
       setUserId(userIdFromToken);
     }
   }, []);
@@ -37,7 +37,7 @@ const DashboardPage = () => {
       <div className="container">
         <h1 className="mt-5">Dashboard</h1>
         <h2 className="mt-3">Your Albums</h2>
-        <UserAlbumList userId={userId} albums={albums} /> {/* Pass the albums prop */}
+        <UserAlbumList userId={userId} albums={albums} />
       </div>
     </Layout>
   );
