@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { fetchPhotoById, fetchCommentsByPhotoId, createComment, deleteComment } from '../../api/api';
 import Layout from '../../components/Layout.js';
 
@@ -9,6 +9,9 @@ const PhotoDetail = () => {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const userId = localStorage.getItem('userId'); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPhotoData = async () => {
@@ -39,12 +42,19 @@ const PhotoDetail = () => {
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    
+
+    if (!userId) {
+      setErrorMessage('You must be logged in to post a comment.');
+      setTimeout(() => {
+      }, 2000);
+      return;
+    }
+
     const commentData = {
       id: 0,
       content: newComment,
       photoId: parseInt(id),
-      userId: '' 
+      userId: userId 
     };
 
     try {
@@ -52,6 +62,7 @@ const PhotoDetail = () => {
       console.log('Comment created:', response);
       fetchComments();
       setNewComment('');
+      setErrorMessage('');
     } catch (error) {
       console.error('Error posting comment:', error);
     }
@@ -99,14 +110,21 @@ const PhotoDetail = () => {
                         <strong className="comment-user-name">Unknown User</strong>
                       )}
                       <span className="comment-date">{formatDate(comment.datePosted)}</span>
-                      <button onClick={() => handleDeleteComment(comment.id)} className="btn btn-danger ml-2">
-                        Delete
-                      </button>
+                      {comment.userId === userId && (
+                        <button onClick={() => handleDeleteComment(comment.id)} className="btn btn-danger ml-2">
+                          Delete
+                        </button>
+                      )}
                     </div>
                     <div className="comment-content">{comment.content}</div>
                   </div>
                 ))}
               </div>
+              {errorMessage && (
+                <div className="alert alert-danger" role="alert">
+                  {errorMessage}
+                </div>
+              )}
               <form onSubmit={handleSubmitComment}>
                 <div className="form-group">
                   <label htmlFor="newComment">New Comment</label>

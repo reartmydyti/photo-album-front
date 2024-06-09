@@ -233,3 +233,32 @@ export const loginOrSignupWithGoogle = async (credential) => {
     throw new Error(error.response.data);
   }
 };
+
+
+export const downloadPhoto = async (photoId) => {
+  try {
+    const response = await api.get(`/Albums/DownloadPhoto/${photoId}`, {
+      responseType: 'blob', 
+      headers: getAuthHeader(),
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `photo_${photoId}.jpg`);
+    document.body.appendChild(link);
+    link.click();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading photo:', error);
+  }
+};
+
+
+export const getUserDetails = async (userId) => {
+  try {
+    const response = await api.get(`/User/GetUserDetails/${userId}`, { headers: getAuthHeader() });
+    return response.data;
+  } catch (error) {
+    throw new Error(`Error fetching user details: ${error.message}`);
+  }
+};

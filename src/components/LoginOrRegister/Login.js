@@ -12,9 +12,9 @@ const Login = () => {
     try {
       const response = await login({ email, password });
       if (response && response.status === 200 && response.message) {
-        const { token, userId } = response; // Extract token and userId from the response
-        localStorage.setItem('token', token); // Set token in localStorage
-        localStorage.setItem('userId', userId); // Set userId in localStorage
+        const { token, userId } = response; 
+        localStorage.setItem('token', token); 
+        localStorage.setItem('userId', userId); 
 
         history.push('/');
       } else {

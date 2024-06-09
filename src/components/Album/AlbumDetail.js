@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchAlbumById, fetchCommentsByAlbumId, createComment, createRating, deleteComment } from '../../api/api';
+import { fetchAlbumById, fetchCommentsByAlbumId, createComment, createRating, deleteComment, deletePhoto, downloadPhoto } from '../../api/api';
 import Layout from '../../components/Layout.js';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -12,7 +12,8 @@ const AlbumDetail = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(0);
-  const userId = localStorage.getItem('userId'); // Get user ID from localStorage
+  const [errorMessage, setErrorMessage] = useState('');
+  const userId = localStorage.getItem('userId'); 
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -43,38 +44,29 @@ const AlbumDetail = () => {
 
   const handleDownloadPhoto = async (photoId, photoUrl) => {
     try {
-      const response = await fetch(photoUrl);
-      const blob = await response.blob();
-      saveAs(blob, `photo_${photoId}.jpg`);
+      await downloadPhoto(photoId); 
     } catch (error) {
       console.error('Error downloading photo:', error);
     }
   };
 
-  const handleDownloadAll = async () => {
-    try {
-      const zip = new JSZip();
-      const promises = album.photos.map(async (photo) => {
-        const response = await fetch(photo.url);
-        const blob = await response.blob();
-        zip.file(`photo_${photo.id}.jpg`, blob);
-      });
-      await Promise.all(promises);
-      const zipFile = await zip.generateAsync({ type: 'blob' });
-      saveAs(zipFile, `${album.name}_photos.zip`);
-    } catch (error) {
-      console.error('Error downloading images:', error);
-    }
-  };
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
+
+    if (!userId) {
+      setErrorMessage('You must be logged in to post a comment.');
+      setTimeout(() => {
+        setErrorMessage('');
+      }, 2000);
+      return;
+    }
 
     const commentData = {
       id: 0,
       content: newComment,
       albumId: parseInt(id),
-      userId: '',
+      userId: userId,
     };
 
     try {
@@ -82,19 +74,28 @@ const AlbumDetail = () => {
       console.log('Comment created:', response);
       fetchComments();
       setNewComment('');
+      setErrorMessage('');
     } catch (error) {
       console.error('Error posting comment:', error);
     }
   };
 
   const handleRatingSubmit = async () => {
+    if (!userId) {
+      setErrorMessage('You must be logged in to rate the album.');
+      setTimeout(() => {
+        setErrorMessage('');
+      }, 2000);
+      return;
+    }
+  
     const ratingDto = {
       id: 0,
       score: rating,
-      userId: '',
+      userId: userId,
       albumId: parseInt(id),
     };
-
+  
     try {
       await createRating(ratingDto);
       console.log('Rating created');
@@ -103,6 +104,7 @@ const AlbumDetail = () => {
       console.error('Error creating rating:', error);
     }
   };
+  
 
   const handleDeleteComment = async (commentId) => {
     try {
@@ -110,6 +112,18 @@ const AlbumDetail = () => {
       fetchComments();
     } catch (error) {
       console.error('Error deleting comment:', error);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId) => {
+    try {
+      await deletePhoto(photoId);
+      setAlbum((prevAlbum) => ({
+        ...prevAlbum,
+        photos: prevAlbum.photos.filter(photo => photo.id !== photoId)
+      }));
+    } catch (error) {
+      console.error('Error deleting photo:', error);
     }
   };
 
@@ -129,12 +143,22 @@ const AlbumDetail = () => {
           <div className="row">
             {album.photos.map((photo) => (
               <div key={photo.id} className="col-md-4 mb-4">
-                <a href={`/photo/${photo.id}`}>
-                  <img className="img-fluid" src={photo.url} alt={`Photo ${photo.id}`} />
-                </a>
-                <button onClick={() => handleDownloadPhoto(photo.id, photo.url)} className="btn btn-primary mt-2">
-                  Download
-                </button>
+                <div className="position-relative">
+                  <a href={`/photo/${photo.id}`}>
+                    <img className="img-fluid" src={photo.url} alt={`Photo ${photo.id}`} />
+                  </a>
+                  <button onClick={() => handleDownloadPhoto(photo.id, photo.url)} className="btn btn-primary mt-2 mr-2">
+                    Download
+                  </button>
+                  {album.userId === userId && (
+                    <button
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      className="btn btn-danger mt-2"
+                    >
+                      Delete Photo
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -167,7 +191,6 @@ const AlbumDetail = () => {
                       <strong className="comment-user-name">Unknown User</strong>
                     )}
                     <span className="comment-date">{formatDate(comment.datePosted)}</span>
-                    {/* Conditionally render Delete button based on user ID */}
                     {comment.userId === userId && (
                       <button onClick={() => handleDeleteComment(comment.id)} className="btn btn-danger ml-2">
                         Delete
@@ -178,6 +201,11 @@ const AlbumDetail = () => {
                 </div>
               ))}
             </div>
+            {errorMessage && (
+              <div className="alert alert-danger" role="alert">
+                {errorMessage}
+              </div>
+            )}
             <form onSubmit={handleSubmitComment}>
               <div className="form-group">
                 <label htmlFor="newComment">New Comment</label>
@@ -200,7 +228,7 @@ const AlbumDetail = () => {
                   <button
                     key={index + 1}
                     onClick={() => setRating(index + 1)}
-                    className={index + 1 === rating ? 'active' : ''}
+                    className={index + 1 === rating ? 'active' : 'btn btn-outline-primary mr-1'}
                   >
                     {index + 1}
                   </button>
