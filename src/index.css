@@ -362,4 +362,98 @@ body {
   
   
 
-  
+.pp-category-filter {
+  margin-bottom: 20px;
+}
+
+.pp-filter-button {
+  margin-right: 10px;
+}
+
+.pp-sort-button {
+  margin-right: 10px;
+}
+
+.pp-gallery {
+  margin-top: 20px;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+.card img {
+  width: 100%;
+  height: 400px; 
+  object-fit: cover; 
+  border-radius: 10px 10px 0 0;
+}
+
+.card h6 {
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.card figcaption {
+  padding: 10px;
+  text-align: center;
+}
+
+.pp-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.pp-effect img.album-image {
+  display: block;
+  width: 100%; 
+  height: 300px; 
+  object-fit: cover; 
+  object-position: center; 
+}
+
+.pp-effect figcaption {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  opacity: 0;
+  transition: opacity 0.5s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.pp-effect:hover figcaption {
+  opacity: 1;
+}
+
+
+.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 3em; 
+  line-height: 1.5em; 
+}
+
+.album-image {
+  width: 100%; 
+  height: 200px; 
+  object-fit: cover; 
+  object-position: center; 
+}

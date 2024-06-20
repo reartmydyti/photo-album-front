@@ -12,6 +12,9 @@ const Layout = ({ children }) => {
         const user = await fetchLoggedInUser();
         if (user && user.userId) {
           localStorage.setItem('userId', user.userId);
+          if (user.roleId) {
+            localStorage.setItem('roleId', user.roleId);
+          }
         } else {
           console.log('fetchLoggedInUser did not return userId');
         }
@@ -28,8 +31,11 @@ const Layout = ({ children }) => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
+    localStorage.removeItem('roleId');
     navigate('/');
   };
+
+  const roleId = localStorage.getItem('roleId');
 
   return (
     <div>
@@ -51,6 +57,9 @@ const Layout = ({ children }) => {
                     <>
                       <li className="nav-item"><Link className="nav-link" to="/createAlbum">Create Album</Link></li>
                       <li className="nav-item"><Link className="nav-link" to="/dashboard">My Albums</Link></li>
+                      {roleId === '1' && (
+                        <li className="nav-item"><Link className="nav-link" to="/categories">Manage Categories</Link></li>
+                      )}
                       <li className="nav-item"><button className="nav-link btn btn-link" onClick={handleLogout}>Logout</button></li>
                     </>
                   ) : (

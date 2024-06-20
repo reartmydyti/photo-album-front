@@ -8,10 +8,24 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AlbumForm from './components/Album/AlbumForm';
 import DashboardPage from './pages/DashboardPage'; 
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import CategoryPage from './pages/CategoryPage';
 
-const PrivateRoute = ({ element: Component, ...rest }) => {
+// Define PrivateRoute component
+const PrivateRoute = ({ element, ...rest }) => {
   const isAuthenticated = !!localStorage.getItem('token');
-  return isAuthenticated ? Component : <Navigate to="/login" />;
+  const roleId = localStorage.getItem('roleId');
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (rest.role && roleId !== rest.role) {
+    return <Navigate to="/" />;
+  }
+
+  return element;
 };
 
 function App() {
@@ -26,6 +40,9 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/createAlbum" element={<PrivateRoute element={<AlbumForm />} />} />
         <Route path="/dashboard" element={<PrivateRoute element={<DashboardPage />} />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/categories" element={<PrivateRoute element={<CategoryPage />} role="1" />} />
       </Routes>
     </Router>
   );

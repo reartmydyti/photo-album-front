@@ -262,3 +262,20 @@ export const getUserDetails = async (userId) => {
     throw new Error(`Error fetching user details: ${error.message}`);
   }
 };
+
+
+export const sendContactEmail = async (contactForm) => {
+  const response = await api.post('/User/SendContactEmail', contactForm, {
+    headers: getAuthHeader(),
+  });
+  return response.data;
+};
+
+export const getCategories = async () => {
+  try {
+    const response = await api.get('/Categories/GetCategories', { headers: getAuthHeader() });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
